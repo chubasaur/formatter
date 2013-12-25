@@ -1,0 +1,13 @@
+package utilities;
+
+
+
+/** Read in a csv 3 lines at a time:
+ * For each group of three input lines: 
+ * 1) Collect lat, med, whole values for Volume, Th, Sp, Number into arrays.
+ * 2) concatenate them together (lat, med, whole)
+   3) organize them by P number and category (baselineControl, control 1 year, aclBaseline, ACL contra, ACL 1year, ACL 1year contra.
+   4) write CSV's that produce desired output
+*/
+
+
