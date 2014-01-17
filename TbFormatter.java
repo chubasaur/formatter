@@ -141,9 +141,8 @@ public class TbFormatter {
                 Matcher typeMatch = typePat.matcher(line[0]);
                 pMatch.find();
                 tMatch.find();
-                typeMatch.if();
-                
-                 (pnumber != Integer.parseInt(pMatch.group(1))) { // if true then you have scanned in a new patient
+                typeMatch.find();
+                 if (pnumber != Integer.parseInt(pMatch.group(1))) { // if true then you have scanned in a new patient
                     if (patient != null) {
                         completePatientRecords(patient);
                         //System.out.println(patient);

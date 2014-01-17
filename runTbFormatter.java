@@ -16,9 +16,24 @@ public class runTbFormatter {
     private static boolean replace = false;
 
     public static void main(String []args) throws IOException{
-        File file = null;
+        /**
+        args = new String[3];
+        args[0] = "-n";
+        args[1] = "/Users/paul/Documents/Research/UCSF/analysis/nonExcluded/fm/fmFiltered.dat";
+        args[2] = "/Users/paul/Documents/Research/UCSF/analysis/nonExcluded/fm/fmTest.csv";
+        */
+
+        /**
+        args = new String[3];
+        args[0] = "-t";
+        args[1] = "/Users/paul/Documents/Research/UCSF/analysis/nonExcluded/tb/tbFiltered.dat";
+        args[2] = "/Users/paul/Documents/Research/UCSF/analysis/nonExcluded/tb/tbTest.csv";
+        */
+        
+        File file = null; // file to read from
+        File fileW = null; // file to write to
         BufferedReader reader = null;
-        if (args.length != 3  || args.length != 5) {
+        if (args.length != 3  && args.length != 5) {
             System.out.printf("Usage: runTbFormatter -tn -r [tbDataFile] [replacementTbData] [saveDestination]\n\n" +
             		"\t-t = tibia" +
             		"\n\t-n = not tibia" +
@@ -26,7 +41,16 @@ public class runTbFormatter {
             
         } else {
             try {
-                file = new File(args[0]);
+                switch (args.length) {
+                    case 3:
+                        file = new File(args[1]);
+                        fileW = new File(args[2]);
+                        break;
+                    case 5:
+                        file = new File(args[2]);
+                        fileW = new File(args[4]);
+                        break;
+                }
                 reader = new BufferedReader(new FileReader(file));
                 if (args[0].equals("-t")) {
                     tb = true;
@@ -38,11 +62,10 @@ public class runTbFormatter {
                 if (args[1].equals("-r")) {
                     replace = true;
                     formatter.setUpdate(replace);
-                    BufferedReader replacementReader = new BufferedReader(new FileReader(new File(args[4])));
+                    BufferedReader replacementReader = new BufferedReader(new FileReader(new File(args[3])));
                     formatter.setReplacement(replacementReader);
                 }
                 formatter.buildPatientLists(); //extra parameters and build csv's as string arrays to be written
-                File fileW = new File(args[1]);//file to write to
                 BufferedWriter writer = new BufferedWriter(new FileWriter(fileW));
                     String[] writeList = formatter.lists().getControlBList();
                     if(tb) {

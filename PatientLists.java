@@ -38,9 +38,10 @@ public class PatientLists {
                     } else {
                         return false;
                     }
-                    break; // made replacement stop looping
+                    return true;
                 }
             }
+            return false;
         } else if (pr.type().equals("acl")) {
             for (int i = 0; i < _ACLPatients.size(); i++) {
                 if (_ACLPatients.get(i).pnumber() == pr.pnumber()) {
@@ -49,10 +50,12 @@ public class PatientLists {
                     } else {
                         return false;
                     }
-                    break;
+                    return true;
                 }
             }
+            return false;
         }
+        return false;
     }
     
     public String[] getControlBList() {// continue from here
