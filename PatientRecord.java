@@ -3,8 +3,8 @@ package utilities;
 /** Each record knows its own patient, type, timeline, and parameters.*/
 public class PatientRecord {
     private int _p;
-    private String _type; //c, acl or blank
-    private String _timeline; // if c then b, or 1 (or 1, 2); if acl then b, b-contra,
+    private String _type; //c, acl or blank, blank is only used to automatically create blank records
+    private String _timeline; // if c then b, or 1 (or 1, 2); if acl then b, b-contra, 1, 1-contra
     private String _fuzzyBVF;
     private String _TbTh;
     private String _TbSp;
@@ -35,7 +35,15 @@ public class PatientRecord {
     public String TbN() {
         return _TbN;
     }
+
+    public String type() {
+        return _type;
+    }
     
+    public int pnumber() {
+        return _p;
+    }
+
     public void setP(int p) {
         _p = p;
     }

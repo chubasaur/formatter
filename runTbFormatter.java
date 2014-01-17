@@ -8,41 +8,39 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-
-
-/** Read in a csv 3 lines at a time:
- * For each group of three input lines: 
- * 1) Collect lat, med, whole values for Volume, Th, Sp, Number into arrays.
- * 2) concatenate them together (lat, med, whole)
-   3) organize them by P number and category (baselineControl, control 1 year, aclBaseline, ACL contra, ACL 1year, ACL 1year contra.
-   4) write CSV's that produce desired output
-*/
-
 public class runTbFormatter {
-    private static boolean tb = false; //When running in TB mode, in addition to making sure timeline is b,1, etc.
-    //need to make sure Lateral => lat, etc. whole, med; P192 1year has a space after whole that needs to be fixed
+    /** Todo: Write something that automatically swaps out patient records.
+     *  Fix Tibia*/
+    
+    private static boolean tb = false; 
+    private static boolean replace = false;
+
     public static void main(String []args) throws IOException{
-        args = new String[2];
-        //args[0] = "/Users/paul/Downloads/TbAnalysis_Fuzzy_Femur.csv";
-        //args[1] = "/Users/paul/Downloads/SavedTbAnalyis_Fuzzy_Femur.csv";
-        //args[0] = "/Users/paul/Downloads/TbAnalysis_Fuzzy_Femur(CSV).csv";
-        //args[1] = "/Users/paul/Downloads/SavedFemur.csv";
-        //args[0] = "/Users/paul/Downloads/TbAnalysis_Fuzzy__LFM(CSV).csv";
-        //args[1] = "/Users/paul/Downloads/SavedLFM.csv";
-        args[0] = "/Users/paul/Downloads/TbAnalysis_Fuzzy_MFM_(CSV).csv";
-        args[1] = "/Users/paul/Downloads/SavedMFM.csv";
-        //args[0] = "/Users/paul/Downloads/TbAnalysis_Fuzzy_Tibia(CSV).csv";
-        //args[1] = "/Users/paul/Downloads/SavedTibia.csv";
         File file = null;
         BufferedReader reader = null;
-        if (args.length != 2) {
-            System.out.printf("Usage: runTbFormatter [csvFileName] [saveDestination\n");
+        if (args.length != 3  || args.length != 5) {
+            System.out.printf("Usage: runTbFormatter -tn -r [tbDataFile] [replacementTbData] [saveDestination]\n\n" +
+            		"\t-t = tibia" +
+            		"\n\t-n = not tibia" +
+            		"\n\t-r = replace, default is do not replace");
+            
         } else {
             try {
                 file = new File(args[0]);
                 reader = new BufferedReader(new FileReader(file));
+                if (args[0].equals("-t")) {
+                    tb = true;
+                }
+
                 TbFormatter formatter = new TbFormatter(reader);
                 formatter.setTb(tb);
+
+                if (args[1].equals("-r")) {
+                    replace = true;
+                    formatter.setUpdate(replace);
+                    BufferedReader replacementReader = new BufferedReader(new FileReader(new File(args[4])));
+                    formatter.setReplacement(replacementReader);
+                }
                 formatter.buildPatientLists(); //extra parameters and build csv's as string arrays to be written
                 File fileW = new File(args[1]);//file to write to
                 BufferedWriter writer = new BufferedWriter(new FileWriter(fileW));

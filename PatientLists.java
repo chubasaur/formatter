@@ -1,6 +1,7 @@
 package utilities;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 /** This class keeps a list of ordered Patients (Patients are either controls or ACL injured)*/
 public class PatientLists {
@@ -11,7 +12,7 @@ public class PatientLists {
     public PatientLists(boolean tb) {
         _tb = tb;
     }
-    public void addPatient(Patient p) { //Patients must be added in order!
+    public void addPatient(Patient p) { //Patients don't have to be added in order, they are sorted later in this program
         if (p.type().equals("acl")) {
             _ACLPatients.add(p);
         } else {
@@ -25,7 +26,34 @@ public class PatientLists {
     public ArrayList<Patient> acls() {
         return _ACLPatients;
     }
-    
+
+
+    /** Replace patient record PR. Returns true if replacement is successful.*/
+    public boolean replaceRecord(PatientRecord pr) {
+        if (pr.type().equals("c")) {
+            for (int i = 0; i < _controlPatients.size(); i++) {
+                if (_controlPatients.get(i).pnumber() == pr.pnumber()) {
+                    if (_controlPatients.get(i).hasRecord(pr.timeline())) {
+                        _controlPatients.get(i).addRecord(pr.timeline(), pr);
+                    } else {
+                        return false;
+                    }
+                    break; // made replacement stop looping
+                }
+            }
+        } else if (pr.type().equals("acl")) {
+            for (int i = 0; i < _ACLPatients.size(); i++) {
+                if (_ACLPatients.get(i).pnumber() == pr.pnumber()) {
+                    if (_ACLPatients.get(i).hasRecord(pr.timeline())) {
+                        _ACLPatients.get(i).addRecord(pr.timeline(), pr);
+                    } else {
+                        return false;
+                    }
+                    break;
+                }
+            }
+        }
+    }
     
     public String[] getControlBList() {// continue from here
         String[] blist = new String[_controlPatients.size()];
@@ -94,6 +122,11 @@ public class PatientLists {
             }
         }
         return blist;
+    }
+    
+    public void sort() {
+        Collections.sort(_controlPatients);
+        Collections.sort(_ACLPatients);
     }
 
 }

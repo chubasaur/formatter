@@ -1,5 +1,5 @@
 package utilities;
-
+/** This class represents the tibia which consists of the whole tibia, lateral tibia, and medial tibia.*/
 public class PatientRecordGroup {
     private int _pnumber;
     private String _type;

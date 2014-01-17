@@ -6,25 +6,13 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.*;
 
-/** This class is called by runTbFormatter and does the work of parsing the input CSV.
- * Needs to know:
- * 1) Type (c, or ACL)
- * 2) if c (baseline or 1 year)
- *    if ACL (baseline, baseline contra, 1 year, or 1 year contra)
- * 3) for tibia, special case need to consider lateral, medial or whole
- *    all others only need to deal with whole
- * Steps?
- *   1) Read in all lines.
- *   2) Collect trabecular values into groups based on type
- *   3) 
- * @author paul
- *
- */
 public class TbFormatter {
-    private static int debug = 1;
+    private static int debug = 10;
     private Scanner _scanner;
     private static boolean _tb;
     private PatientLists _lists;
+    private static boolean _update;
+    private Scanner _replacement;
     public TbFormatter(BufferedReader reader) {
         _scanner = new Scanner(reader);
     }
@@ -34,6 +22,15 @@ public class TbFormatter {
     }
     public void setTb(boolean bool) {
         _tb = bool;
+    }
+    /** Set the boolean flag indicating whether a replacement is to happen
+     *  or not to BOOL.*/
+    public void setUpdate(boolean bool) {
+        _update = bool;
+    }
+    /** Set the replacement text scanner to REPL.*/
+    public void setReplacement(BufferedReader repl) {
+        _replacement = new Scanner(repl);
     }
     /** Before building patient list, make sure:
      * 1) all entries in csv for type are filled (c or acl)
@@ -50,30 +47,40 @@ public class TbFormatter {
             int pnumber = -1;
             String timeline = "";
             String type = "";
-            _scanner.nextLine();//throw away first line
             while (_scanner.hasNextLine()) {
                 String blob = _scanner.nextLine();
-                line = blob.replaceAll("\"","").split(",");
+                line = blob.split("\t");
+                Pattern pNumPat = Pattern.compile(".*/P(\\d*)/.*");
+                Pattern timelinePat = Pattern.compile(".*/(b|b-contra|1|1-contra)/.*");
+                Pattern typePat = Pattern.compile(".*/(control|acl)/.*");
+                Matcher pMatch = pNumPat.matcher(line[0]); //pMatch now contains the pnumber
+                Matcher tMatch = timelinePat.matcher(line[0]); // tMatch contains the timeline
+                Matcher typeMatch = typePat.matcher(line[0]);
+                pMatch.find();
+                tMatch.find();
+                typeMatch.find();
                 if (line.length == 0) {
                     continue;
                 }
-                if(!line[0].equals("")) {
+                if(pnumber != Integer.parseInt(pMatch.group(1))) {
                     if (patient != null) {
                         completePatientRecords(patient);
-                        System.out.println(patient);
+                        //System.out.println(patient);
                         _lists.addPatient(patient);
                     }
-                    pnumber = Integer.parseInt(line[0]);
+                    pnumber = Integer.parseInt(pMatch.group(1));
                     patient = new Patient(pnumber);
                     patient.setTb(_tb);
-                    type = line[1];
+                    if (typeMatch.group(1).equals("control")) {
+                        type = "c";
+                    } else {
+                        type = "acl";
+                    }
                     patient.setType(type);
                 }
-                if ((line.length < 9) || line[8].equals("")){ //empty record, so skip;
-                    continue; //
-                }
-                if (!line[2].equals("")) {
-                    timeline = line[2];
+                if (line[3].trim().equals("1")) { //1 represents "whole", know that when you scan this you
+                                           // are beginning a new record group
+                    timeline = tMatch.group(1);
                     group = new PatientRecordGroup(pnumber);
                     group.setTimeline(timeline);
                     patient.addRecordGroup(group);
@@ -82,13 +89,27 @@ public class TbFormatter {
                 rec.setTB(true);
                 rec.setEmpty(false);
                 rec.setP(pnumber);
-                rec.setType(type);
-                rec.setTimeline(timeline);
-                rec.setFuzzy(line[8]);
-                rec.setTbTh(line[9]);
-                rec.setTbSp(line[10]);
-                rec.setTbN(line[11]);
-                rec.setPortion(line[7]);
+                if (typeMatch.group(1).equals("control")) {
+                    rec.setType("c");
+                } else {
+                    rec.setType("acl");
+                }
+                rec.setTimeline(tMatch.group(1));
+                rec.setFuzzy(line[4].trim());
+                rec.setTbTh(line[5].trim());
+                rec.setTbSp(line[6].trim());
+                rec.setTbN(line[7].trim());
+                switch (Integer.parseInt(line[3].trim())) {
+                    case 1:
+                        rec.setPortion("whole");
+                        break;
+                    case 2:
+                        rec.setPortion("lat");
+                        break;
+                    case 3:
+                        rec.setPortion("med");
+                        break;
+                }
                 group.set(rec);
             }
             completePatientRecords(patient);
@@ -97,7 +118,7 @@ public class TbFormatter {
             if (debug == 1) {
                 this.printPatientList();
             }
-            
+            insertBlankRecords();
         } else {
             /** Assumes that input to scanner 
              * a) only consists of data that should be added
@@ -110,37 +131,47 @@ public class TbFormatter {
             _lists = new PatientLists(_tb);
             Patient patient = null;
             int pnumber = -1;
-            _scanner.nextLine(); // throw away first line;
             while(_scanner.hasNextLine()) {
-                line = _scanner.nextLine().split("\\s");//split input lines around whitespace
-                Pattern pNumber = Pattern.compile("/P\\d*/");
-                Pattern timeline = Pattern.compile("/(b|b-contra|1|1-contra)/");
+                line = _scanner.nextLine().split("\t");//split input lines around tabs
+                Pattern pNumPat = Pattern.compile(".*/P(\\d*)/.*");
+                Pattern timelinePat = Pattern.compile(".*/(b|b-contra|1|1-contra)/.*");
+                Pattern typePat = Pattern.compile(".*/(control|acl)/.*");
+                Matcher pMatch = pNumPat.matcher(line[0]); //pMatch now contains the pnumber
+                Matcher tMatch = timelinePat.matcher(line[0]); // tMatch contains the timeline
+                Matcher typeMatch = typePat.matcher(line[0]);
+                pMatch.find();
+                tMatch.find();
+                typeMatch.if();
                 
-                
-                if (!line[0].equals("")) { // if true then you have scanned in a new patient
+                 (pnumber != Integer.parseInt(pMatch.group(1))) { // if true then you have scanned in a new patient
                     if (patient != null) {
                         completePatientRecords(patient);
                         //System.out.println(patient);
                         _lists.addPatient(patient);
                     }
-                    pnumber = Integer.parseInt(line[0]);
+                    pnumber = Integer.parseInt(pMatch.group(1));
                     patient = new Patient(pnumber);
                     patient.setTb(_tb);
-                    patient.setType(line[1]);
-                }
-                if ((line.length < 9) || line[8].equals("")){ //empty record, so skip;
-                    continue; //
+                    if (typeMatch.group(1).equals("control")) {
+                        patient.setType("c");
+                    } else {
+                        patient.setType("acl");
+                    }
                 }
                 PatientRecord rec = new PatientRecord();
                 rec.setTB(false);
                 rec.setEmpty(false);
                 rec.setP(pnumber);
-                rec.setType(line[1]);
-                rec.setTimeline(line[2]); //make sure input file only has c, 1, b, b-contra, 1, 1-contra
-                rec.setFuzzy(line[7]);
-                rec.setTbTh(line[8]);
-                rec.setTbSp(line[9]);
-                rec.setTbN(line[10]);
+                if (typeMatch.group(1).equals("control")) {
+                    rec.setType("c");
+                } else {
+                    rec.setType("acl");
+                }
+                rec.setTimeline(tMatch.group(1)); //make sure input file only has c, 1, b, b-contra, 1, 1-contra
+                rec.setFuzzy(line[4].trim());
+                rec.setTbTh(line[5].trim());
+                rec.setTbSp(line[6].trim());
+                rec.setTbN(line[7].trim());
                 patient.addRecord(rec.timeline(), rec);    
             }
             completePatientRecords(patient);
@@ -149,9 +180,105 @@ public class TbFormatter {
             if (debug == 1) {
                 this.printPatientList();
             }
+            insertBlankRecords();
+        }
+        _lists.sort();
+        if (_update) {
+            update();
         }
     }
 
+
+
+    /** Updates patient records in _lists with patient information in _replacement.*/
+    private void update() {
+        String[] line;
+        while (_scanner.hasNextLine()) {
+            line = _scanner.nextLine().split("\t");
+            PatientRecord rec = makeRecord(line);
+            if (!_lists.replaceRecord(rec)) {
+                throw new IllegalArgumentException("Cannot replace a record which does not exist.");
+            }
+        }
+    }
+
+
+
+    private PatientRecord makeRecord(String[] line) {
+        line = _scanner.nextLine().split("\t");//split input lines around tabs
+        Pattern pNumPat = Pattern.compile(".*/P(\\d*)/.*");
+        Pattern timelinePat = Pattern.compile(".*/(b|b-contra|1|1-contra)/.*");
+        Pattern typePat = Pattern.compile(".*/(control|acl)/.*");
+        Matcher pMatch = pNumPat.matcher(line[0]); //pMatch now contains the pnumber
+        Matcher tMatch = timelinePat.matcher(line[0]); // tMatch contains the timeline
+        Matcher typeMatch = typePat.matcher(line[0]);
+        pMatch.find();
+        tMatch.find();
+        typeMatch.find();
+        PatientRecord rec = new PatientRecord();
+        rec.setP(Integer.parseInt(pMatch.group(1)));
+        rec.setTimeline(tMatch.group(1));
+        rec.setTB(_tb);
+        if (_tb) { //tb and !tb have different ways of matching
+            rec.setEmpty(false);
+            if (typeMatch.group(1).equals("control")) {
+                rec.setType("c");
+            } else {
+                rec.setType("acl");
+            }
+            rec.setTimeline(tMatch.group(1));
+            rec.setFuzzy(line[4].trim());
+            rec.setTbTh(line[5].trim());
+            rec.setTbSp(line[6].trim());
+            rec.setTbN(line[7].trim());
+            switch (Integer.parseInt(line[3].trim())) {
+            case 1:
+                rec.setPortion("whole");
+                break;
+            case 2:
+                rec.setPortion("lat");
+                break;
+            case 3:
+                rec.setPortion("med");
+                break;
+            }
+        } else {
+            rec.setEmpty(false);
+            if (typeMatch.group(1).equals("control")) {
+                rec.setType("c");
+            } else {
+                rec.setType("acl");
+            }
+            rec.setFuzzy(line[4].trim());
+            rec.setTbTh(line[5].trim());
+            rec.setTbSp(line[6].trim());
+            rec.setTbN(line[7].trim());
+        }
+        return rec;
+    }
+
+
+
+
+    /** Insert Blank Records into patient list to maintain consistency.*/
+    private void insertBlankRecords() {
+        String[] emptyControls = {"91"};//insert missing control patients here
+        String[] emptyACLs = {"290"};// insert missing acl patients here
+        for (int i = 0; i < emptyControls.length; i++) {
+            Patient pat = new Patient(Integer.parseInt(emptyControls[i]));
+            pat.setTb(_tb);
+            pat.setType("c");
+            completePatientRecords(pat);
+            _lists.addPatient(pat);
+        }
+        for (int i = 0; i < emptyControls.length; i++) {
+            Patient pat = new Patient(Integer.parseInt(emptyACLs[i]));
+            pat.setTb(_tb);
+            pat.setType("acl");
+            completePatientRecords(pat);
+            _lists.addPatient(pat);
+        }
+    }
     
     /** Fill in unfilled Records in the patient with blank entries.*/
     public static void completePatientRecords(Patient pat) {

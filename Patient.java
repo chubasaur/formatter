@@ -2,13 +2,13 @@ package utilities;
 
 import java.util.HashMap;
 
-public class Patient implements Comparable{
+public class Patient implements Comparable<Patient>{
     private int _pnumber;
     private boolean _tb;
     private String _type; // acl or c
-    HashMap<String, PatientRecord> _records = new HashMap<String, PatientRecord>(); //index records for 
+    private HashMap<String, PatientRecord> _records = new HashMap<String, PatientRecord>(); //index records for 
     //this patient by timeline (b, 1) (b, b-contra, 1, 1-contra);
-    HashMap<String, PatientRecordGroup> _groupRecords = new HashMap<String, PatientRecordGroup>();
+    private HashMap<String, PatientRecordGroup> _groupRecords = new HashMap<String, PatientRecordGroup>();
     
     public Patient(int pnumber) {
         _pnumber = pnumber;
@@ -53,10 +53,10 @@ public class Patient implements Comparable{
         return _groupRecords.containsKey(timeline);
     }
     @Override
-    public int compareTo(Object arg0) {
+    public int compareTo(Patient arg0) {
         if (this.pnumber() < ((Patient) arg0).pnumber()) {
             return -1;
-        } else if (this.pnumber() < ((Patient) arg0).pnumber()) {
+        } else if (this.pnumber() == ((Patient) arg0).pnumber()) {
             return 0;
         } else {
             return 1;
